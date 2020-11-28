@@ -1,25 +1,106 @@
-classdef ProjectDijkstra_e < matlab.apps.AppBase
+classdef ProjectDijkstra < matlab.apps.AppBase
 
     % Properties that correspond to app components
     properties (Access = public)
-        UIFigure            matlab.ui.Figure
-        UITable             matlab.ui.control.Table
-        EditFieldLabel      matlab.ui.control.Label
-        EditField           matlab.ui.control.NumericEditField
-        CreateGraphButton   matlab.ui.control.Button
-        SpinnerLabel        matlab.ui.control.Label
-        Spinner             matlab.ui.control.Spinner
-        Spinner2Label       matlab.ui.control.Label
-        Spinner2            matlab.ui.control.Spinner
-        ShortestPathButton  matlab.ui.control.Button
-        UIAxes              matlab.ui.control.UIAxes
+        UIFigure                      matlab.ui.Figure
+        UIAxes                        matlab.ui.control.UIAxes
+        UITableAdjMatrix              matlab.ui.control.Table
+        SizeofthegraphEditFieldLabel  matlab.ui.control.Label
+        SizeEditField                 matlab.ui.control.NumericEditField
+        CreateGraphButton             matlab.ui.control.Button
+        StartnodeLabel                matlab.ui.control.Label
+        SpinnerStart                  matlab.ui.control.Spinner
+        EndnodeLabel                  matlab.ui.control.Label
+        SpinnerEnd                    matlab.ui.control.Spinner
+        ShortestPathButton            matlab.ui.control.Button
+        TextArea                      matlab.ui.control.TextArea
+        RestartButton                 matlab.ui.control.Button
+        UITableDistMatrix             matlab.ui.control.Table
     end
 
     properties (Access = public)
         A = zeros % Adj matrix
         G = graph % Graph
         p
-        nodesNum = 0
+        matrixOfDistance
+        matrixOfPath
+    end
+    
+    methods (Access = private)
+ 
+        function [prev, d] = dijkstra(app, source)
+            n = numnodes(app.G);
+            d = ones(1, n) * Inf;    % array of the shortest distnaces to source node 
+            d(source) = 0;          % the distance from source node to source node is 0
+            prev = zeros(1, n);      % array of previous nodes 
+            visited = zeros(1, n);	% array of visited nodes, when value is 0 - node has not been visited yet, otherwise value is Inf  
+            count = 0;              % counter of visited nodes 
+            
+            while count < n
+                tmp = ones(1, n) * Inf; % temporary array of distances to nodes 
+                for i = 1:n
+                    if visited(i) == 0  % if the i'th node has not been visited yet
+                        tmp(i) = d(i);   % assign actual distance to this node to the tmp array   
+                    end
+                end
+                
+                [~, node_idx] = min(tmp); % get the index of closest unvisited node (node with minimum distance)
+                visited(node_idx) = Inf;  
+                neighbours = neighbors(app.G, node_idx); % get all neighbours of node
+                
+                for i = 1:size(neighbours, 1)
+                    w = neighbours(i); 
+                    if visited(w) == 0  
+                        weight = app.G.Edges.Weight(findedge(app.G, node_idx, w));  
+                        if d(w) > d(node_idx) + weight
+                            d(w) = d(node_idx) + weight;
+                            prev(w) = node_idx;
+                        end
+                    end
+                end
+                
+                count = count + 1; 
+            end
+        end
+
+        
+        function graphPlot = drawGraph(app)
+            graphPlot = plot(app.UIAxes, app.G,'EdgeLabel', app.G.Edges.Weight);
+        end
+       
+        
+        function matrixOfDistance = calculateMatrixOfDistance(app)
+            n = numnodes(app.G);
+            matrixOfDistance = zeros(n, n);
+            for i = 1:n
+                [~, matrixOfDistance(i, :)] = dijkstra(app, i);
+            end
+        end
+        
+        function matrixOfPath = calculateMatrixOfPath(app)
+            n = numnodes(app.G);
+            matrixOfPath = zeros(n, n);
+            for i = 1:n
+                [matrixOfPath(i, :), ~] = dijkstra(app, i);
+            end
+        end
+        
+        function shortest_path = findShortestPath(app, startNode, endNode)
+            path = [];
+            tmp = endNode;            
+            while tmp ~= startNode
+                if(tmp == 0)
+                    uialert(app.UIFigure, "Try to create connected graph", "Title", "Icon", "info");
+                    shortest_path = null(1);
+                    return;
+                else
+                    path(end+1) = tmp;
+                    tmp = app.matrixOfPath(startNode, tmp);
+                end
+            end 
+            path(end+1) = startNode;
+            shortest_path = path;            
+        end
     end   
 
     % Callbacks that handle component events
@@ -27,61 +108,163 @@ classdef ProjectDijkstra_e < matlab.apps.AppBase
 
         % Code that executes after component creation
         function startupFcn(app)
+            app.A = zeros;
+            app.G = graph;
+            delete(app.p);
             
+            app.UITableAdjMatrix.Visible = "off";
+            app.UITableAdjMatrix.Enable = "off";
+            
+            app.CreateGraphButton.Visible = "off";
+            app.CreateGraphButton.Enable = "off";  
+            
+            app.UIAxes.Visible = "off";
+           
+            app.UITableDistMatrix.Visible = "off";
+            app.UITableDistMatrix.Enable = "off";
+            removeStyle(app.UITableDistMatrix);
+
+            
+            app.SpinnerStart.Visible = "off";
+            app.SpinnerStart.Enable = "off";
+            app.SpinnerStart.Editable = "off";
+            app.SpinnerStart.Value = 1;
+            app.StartnodeLabel.Visible = "off";
+            
+            app.SpinnerEnd.Visible = "off";
+            app.SpinnerEnd.Enable = "off";
+            app.SpinnerEnd.Editable = "off";
+            app.SpinnerEnd.Value = 1;
+            app.EndnodeLabel.Visible = "off";
+            
+            app.ShortestPathButton.Visible = "off";
+            app.ShortestPathButton.Enable = "off";  
         end
 
-        % Value changed function: EditField
-        function EditFieldValueChanged(app, event)
-            value = app.EditField.Value;
-            app.nodesNum(1) = value; 
-            app.UITable.Data = zeros(value, value); 
-            app.UITable.ColumnName = 1:value;
-            app.UITable.RowName = 1:value;
-            app.UITable.ColumnWidth = {30, 30, 30, 30, 30, 30, 30, 30, 30, 30};
-            app.UITable.Visible = "on";
-            app.UITable.Enable = "on";
-
+        % Value changed function: SizeEditField
+        function SizeEditFieldValueChanged(app, event)
+            app.startupFcn()
+            value = app.SizeEditField.Value;
+            app.UITableAdjMatrix.Data = zeros(value, value); 
+ 
+            width = 33 * (value + 2);
+            height = 24 * (value + 2);
+            
+            app.UITableAdjMatrix.ColumnName = 1:value;
+            app.UITableAdjMatrix.RowName = 1:value;
+            app.UITableAdjMatrix.ColumnWidth = {33, 33, 33, 33, 33, 33, 33, 33, 33, 33};
+            app.UITableAdjMatrix.Position = [app.UIFigure.Position(3)/4 - width/2, app.UIFigure.Position(4)*2/3 - height, width, height];
+            
+            app.UITableDistMatrix.ColumnName = 1:value;
+            app.UITableDistMatrix.RowName = 1:value;
+            app.UITableDistMatrix.ColumnWidth = {33, 33, 33, 33, 33, 33, 33, 33, 33, 33};
+            app.UITableDistMatrix.Position = [510, 280 - height, width, height];
+            
+            app.UITableAdjMatrix.Visible = "on";
+            app.UITableAdjMatrix.Enable = "on";
+            
+            app.CreateGraphButton.Visible = "on";
+            app.CreateGraphButton.Enable = "on";
+            
             app.A = zeros(value);
         end
 
-        % Cell edit callback: UITable
-        function UITableCellEdit(app, event)
+        % Cell edit callback: UITableAdjMatrix
+        function UITableAdjMatrixCellEdit(app, event)
             row = event.Indices(1);
             col = event.Indices(2);
-          
             newData = event.NewData;
+            if (isnan(newData))
+                uialert(app.UIFigure, "Weights must be numbers", "Title", "Icon", "info");
+                app.UITableAdjMatrix.Data = app.A;             
+                return;
+            end
             
             if (row == col)
-                uialert(app.UIFigure, "The diagonal weights must be 0", "Title", "Icon", "info")
+                uialert(app.UIFigure, "The diagonal weights must be 0", "Title", "Icon", "info");
                 app.A(row, col) = 0;
             else
                 app.A(row, col) = newData;
                 app.A(col, row) = newData;
             end
             
-            app.UITable.Data = app.A;             
+            app.UITableAdjMatrix.Data = app.A;             
         end
 
         % Button pushed function: CreateGraphButton
         function CreateGraphButtonPushed(app, event)
             app.G = graph(app.A);
-            plot(app.UIAxes, app.G,'EdgeLabel', app.G.Edges.Weight);
-            %fplot(app.UIAxes, app.G);
-        end
+            app.p = app.drawGraph();
 
-        % Callback function
-        function Spinner2ValueChanged(app, event)
+            app.UIAxes.Visible = "on";
             
+            app.SpinnerStart.Visible = "on";
+            app.SpinnerStart.Enable = "on";
+            app.SpinnerStart.Editable = "on";
+            app.StartnodeLabel.Visible = "on";
+            app.SpinnerStart.Limits = [0, numnodes(app.G)];
+
+            app.SpinnerEnd.Visible = "on";
+            app.SpinnerEnd.Enable = "on";
+            app.SpinnerEnd.Editable = "on";
+            app.EndnodeLabel.Visible = "on";
+            app.SpinnerEnd.Limits = [0, numnodes(app.G)];
+            
+            app.UITableDistMatrix.Visible = "on";
+            app.UITableDistMatrix.Enable = "on";
+
+            app.ShortestPathButton.Visible = "on";
+            app.ShortestPathButton.Enable = "on";   
+            
+            app.matrixOfDistance = app.calculateMatrixOfDistance();
+            app.UITableDistMatrix.Data = app.matrixOfDistance;  
+            
+            app.matrixOfPath = app.calculateMatrixOfPath();
         end
 
         % Button pushed function: ShortestPathButton
         function ShortestPathButtonPushed(app, event)
-            startNode = app.Spinner.Value;
-            endNode = app.Spinner2.Value; 
-            [path,distance] = dijkstra(app.G,startNode,endNode, app.nodesNum);
-            app.p = plot(app.UIAxes, app.G,'EdgeLabel', app.G.Edges.Weight);
-            highlight(app.p,path,'EdgeColor','g')
-            disp(distance);
+            startNode = app.SpinnerStart.Value;
+            endNode = app.SpinnerEnd.Value; 
+            if (app.findShortestPath(startNode, endNode))
+                path = app.findShortestPath(startNode, endNode);
+            else
+                removeStyle(app.UITableDistMatrix);
+                app.p = app.drawGraph();
+                return;
+            end
+
+            app.p = app.drawGraph();
+            highlight(app.p, path,'EdgeColor', 'g');
+            
+            removeStyle(app.UITableDistMatrix);
+            
+            s = uistyle('BackgroundColor', 'yellow');
+            addStyle(app.UITableDistMatrix, s, 'cell', [startNode, endNode]);
+            addStyle(app.UITableDistMatrix, s, 'cell', [endNode, startNode]);
+        end
+
+        % Button pushed function: RestartButton
+        function RestartButtonPushed(app, event)
+            app.startupFcn();
+        end
+
+        % Value changing function: SpinnerStart
+        function SpinnerStartValueChanging(app, event)
+            changingValue = event.Value;
+            if (changingValue == 0)
+                uialert(app.UIFigure, "There is no node with number 0", "Title", "Icon", "info");
+                app.SpinnerStart.Value = 1;
+            end
+        end
+
+        % Value changing function: SpinnerEnd
+        function SpinnerEndValueChanging(app, event)
+            changingValue = event.Value;
+            if (changingValue == 0)
+                uialert(app.UIFigure, "There is no node with number 0", "Title", "Icon", "info");
+                app.SpinnerEnd.Value = 1;
+            end            
         end
     end
 
@@ -93,69 +276,99 @@ classdef ProjectDijkstra_e < matlab.apps.AppBase
 
             % Create UIFigure and hide until all components are created
             app.UIFigure = uifigure('Visible', 'off');
-            app.UIFigure.Position = [100 100 1022 556];
+            app.UIFigure.Position = [100 100 1156 790];
             app.UIFigure.Name = 'UI Figure';
-
-            % Create UITable
-            app.UITable = uitable(app.UIFigure);
-            app.UITable.ColumnName = {''};
-            app.UITable.RowName = {''};
-            app.UITable.ColumnEditable = true;
-            app.UITable.CellEditCallback = createCallbackFcn(app, @UITableCellEdit, true);
-            app.UITable.Tooltip = {''; ''; ''};
-            app.UITable.Enable = 'off';
-            app.UITable.Position = [24 177 342 300];
-
-            % Create EditFieldLabel
-            app.EditFieldLabel = uilabel(app.UIFigure);
-            app.EditFieldLabel.HorizontalAlignment = 'right';
-            app.EditFieldLabel.Position = [43 486 55 22];
-            app.EditFieldLabel.Text = 'Edit Field';
-
-            % Create EditField
-            app.EditField = uieditfield(app.UIFigure, 'numeric');
-            app.EditField.Limits = [0 10];
-            app.EditField.ValueChangedFcn = createCallbackFcn(app, @EditFieldValueChanged, true);
-            app.EditField.Position = [113 486 100 22];
-
-            % Create CreateGraphButton
-            app.CreateGraphButton = uibutton(app.UIFigure, 'push');
-            app.CreateGraphButton.ButtonPushedFcn = createCallbackFcn(app, @CreateGraphButtonPushed, true);
-            app.CreateGraphButton.Position = [79 67 100 22];
-            app.CreateGraphButton.Text = 'Create Graph';
-
-            % Create SpinnerLabel
-            app.SpinnerLabel = uilabel(app.UIFigure);
-            app.SpinnerLabel.HorizontalAlignment = 'right';
-            app.SpinnerLabel.Position = [453 66 47 22];
-            app.SpinnerLabel.Text = 'Spinner';
-
-            % Create Spinner
-            app.Spinner = uispinner(app.UIFigure);
-            app.Spinner.Position = [515 66 100 22];
-
-            % Create Spinner2Label
-            app.Spinner2Label = uilabel(app.UIFigure);
-            app.Spinner2Label.HorizontalAlignment = 'right';
-            app.Spinner2Label.Position = [446 28 54 22];
-            app.Spinner2Label.Text = 'Spinner2';
-
-            % Create Spinner2
-            app.Spinner2 = uispinner(app.UIFigure);
-            app.Spinner2.Position = [515 28 100 22];
-
-            % Create ShortestPathButton
-            app.ShortestPathButton = uibutton(app.UIFigure, 'push');
-            app.ShortestPathButton.ButtonPushedFcn = createCallbackFcn(app, @ShortestPathButtonPushed, true);
-            app.ShortestPathButton.Position = [657 49 100 22];
-            app.ShortestPathButton.Text = 'ShortestPath';
 
             % Create UIAxes
             app.UIAxes = uiaxes(app.UIFigure);
             title(app.UIAxes, 'Weighted graph')
+            xlabel(app.UIAxes, '')
+            ylabel(app.UIAxes, '')
             app.UIAxes.XTick = [];
             app.UIAxes.YTick = [];
-            app.UIAxes.Position = [377 109 544 399];
+            app.UIAxes.Position = [511 321 626 438];
+
+            % Create UITableAdjMatrix
+            app.UITableAdjMatrix = uitable(app.UIFigure);
+            app.UITableAdjMatrix.ColumnName = {'Adjacency matrix'};
+            app.UITableAdjMatrix.RowName = {''};
+            app.UITableAdjMatrix.ColumnEditable = true;
+            app.UITableAdjMatrix.RowStriping = 'off';
+            app.UITableAdjMatrix.CellEditCallback = createCallbackFcn(app, @UITableAdjMatrixCellEdit, true);
+            app.UITableAdjMatrix.Tooltip = {''; ''; ''};
+            app.UITableAdjMatrix.Position = [78 226 342 300];
+
+            % Create SizeofthegraphEditFieldLabel
+            app.SizeofthegraphEditFieldLabel = uilabel(app.UIFigure);
+            app.SizeofthegraphEditFieldLabel.HorizontalAlignment = 'right';
+            app.SizeofthegraphEditFieldLabel.Position = [157 536 96 22];
+            app.SizeofthegraphEditFieldLabel.Text = 'Size of the graph';
+
+            % Create SizeEditField
+            app.SizeEditField = uieditfield(app.UIFigure, 'numeric');
+            app.SizeEditField.Limits = [0 10];
+            app.SizeEditField.ValueChangedFcn = createCallbackFcn(app, @SizeEditFieldValueChanged, true);
+            app.SizeEditField.Position = [268 536 100 22];
+
+            % Create CreateGraphButton
+            app.CreateGraphButton = uibutton(app.UIFigure, 'push');
+            app.CreateGraphButton.ButtonPushedFcn = createCallbackFcn(app, @CreateGraphButtonPushed, true);
+            app.CreateGraphButton.Position = [320 169 100 22];
+            app.CreateGraphButton.Text = 'Create Graph';
+
+            % Create StartnodeLabel
+            app.StartnodeLabel = uilabel(app.UIFigure);
+            app.StartnodeLabel.HorizontalAlignment = 'right';
+            app.StartnodeLabel.Position = [907 270 61 22];
+            app.StartnodeLabel.Text = 'Start node';
+
+            % Create SpinnerStart
+            app.SpinnerStart = uispinner(app.UIFigure);
+            app.SpinnerStart.ValueChangingFcn = createCallbackFcn(app, @SpinnerStartValueChanging, true);
+            app.SpinnerStart.Limits = [1 10];
+            app.SpinnerStart.Position = [983 270 100 22];
+            app.SpinnerStart.Value = 1;
+
+            % Create EndnodeLabel
+            app.EndnodeLabel = uilabel(app.UIFigure);
+            app.EndnodeLabel.HorizontalAlignment = 'right';
+            app.EndnodeLabel.Position = [909 226 57 22];
+            app.EndnodeLabel.Text = 'End node';
+
+            % Create SpinnerEnd
+            app.SpinnerEnd = uispinner(app.UIFigure);
+            app.SpinnerEnd.ValueChangingFcn = createCallbackFcn(app, @SpinnerEndValueChanging, true);
+            app.SpinnerEnd.Limits = [1 10];
+            app.SpinnerEnd.Position = [981 226 100 22];
+            app.SpinnerEnd.Value = 1;
+
+            % Create ShortestPathButton
+            app.ShortestPathButton = uibutton(app.UIFigure, 'push');
+            app.ShortestPathButton.ButtonPushedFcn = createCallbackFcn(app, @ShortestPathButtonPushed, true);
+            app.ShortestPathButton.Position = [957 160 100 22];
+            app.ShortestPathButton.Text = 'Shortest Path';
+
+            % Create TextArea
+            app.TextArea = uitextarea(app.UIFigure);
+            app.TextArea.FontSize = 13;
+            app.TextArea.BackgroundColor = [0.9412 0.9412 0.9412];
+            app.TextArea.Position = [23 588 477 166];
+            app.TextArea.Value = {'Welcome :)'; 'This program will allow you to find the shortest paths in a given graph.'; 'All you have to do is:'; '1: Enter the size of the graph you want to create'; '2: Complete the adjacency matrix (remember that diagonal weights must be 0)'; '3: Click: Create graph'; '4: Select two vertices'; '5: Click: Shortest path'};
+
+            % Create RestartButton
+            app.RestartButton = uibutton(app.UIFigure, 'push');
+            app.RestartButton.ButtonPushedFcn = createCallbackFcn(app, @RestartButtonPushed, true);
+            app.RestartButton.Position = [33 57 100 22];
+            app.RestartButton.Text = 'Restart';
+
+            % Create UITableDistMatrix
+            app.UITableDistMatrix = uitable(app.UIFigure);
+            app.UITableDistMatrix.ColumnName = {'Matrix of distances'};
+            app.UITableDistMatrix.RowName = {''};
+            app.UITableDistMatrix.ColumnEditable = true;
+            app.UITableDistMatrix.RowStriping = 'off';
+            app.UITableDistMatrix.Tooltip = {''; ''; ''};
+            app.UITableDistMatrix.Position = [511 21 342 300];
 
             % Show the figure after all components are created
             app.UIFigure.Visible = 'on';
@@ -166,7 +379,7 @@ classdef ProjectDijkstra_e < matlab.apps.AppBase
     methods (Access = public)
 
         % Construct app
-        function app = ProjectDijkstra_e
+        function app = ProjectDijkstra
 
             % Create UIFigure and components
             createComponents(app)
