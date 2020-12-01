@@ -19,7 +19,7 @@ classdef ProjectDijkstra < matlab.apps.AppBase
     end
 
     properties (Access = public)
-        A = zeros % Adj matrix
+        A = zeros % Adjacency matrix
         G = graph % Graph
         p
         matrixOfDistance
@@ -30,11 +30,11 @@ classdef ProjectDijkstra < matlab.apps.AppBase
  
         function [prev, d] = dijkstra(app, source)
             n = numnodes(app.G);
-            d = ones(1, n) * Inf;    % array of the shortest distnaces to source node 
-            d(source) = 0;          % the distance from source node to source node is 0
-            prev = zeros(1, n);      % array of previous nodes 
-            visited = zeros(1, n);	% array of visited nodes, when value is 0 - node has not been visited yet, otherwise value is Inf  
-            count = 0;              % counter of visited nodes 
+            d = ones(1, n) * Inf;     % array of the shortest distnaces to source node 
+            d(source) = 0;            % the distance from source node to source node is 0
+            prev = zeros(1, n);       % array of previous nodes 
+            visited = zeros(1, n);	  % array of visited nodes, when value is 0 - node has not been visited yet, otherwise value is Inf  
+            count = 0;                % counter of visited nodes 
             
             while count < n
                 tmp = ones(1, n) * Inf; % temporary array of distances to nodes 
@@ -65,7 +65,7 @@ classdef ProjectDijkstra < matlab.apps.AppBase
 
         
         function graphPlot = drawGraph(app)
-            graphPlot = plot(app.UIAxes, app.G,'EdgeLabel', app.G.Edges.Weight);
+            graphPlot = plot(app.UIAxes, app.G, 'EdgeLabel', app.G.Edges.Weight);
         end
        
         
@@ -138,7 +138,7 @@ classdef ProjectDijkstra < matlab.apps.AppBase
             app.EndnodeLabel.Visible = "off";
             
             app.ShortestPathButton.Visible = "off";
-            app.ShortestPathButton.Enable = "off";  
+            app.ShortestPathButton.Enable = "off";
         end
 
         % Value changed function: SizeEditField
@@ -176,6 +176,10 @@ classdef ProjectDijkstra < matlab.apps.AppBase
             newData = event.NewData;
             if (isnan(newData))
                 uialert(app.UIFigure, "Weights must be numbers", "Title", "Icon", "info");
+                app.UITableAdjMatrix.Data = app.A;             
+                return;
+            elseif (newData < 0)
+                uialert(app.UIFigure, "Weights must be greater than zero", "Title", "Icon", "info");
                 app.UITableAdjMatrix.Data = app.A;             
                 return;
             end
@@ -235,7 +239,7 @@ classdef ProjectDijkstra < matlab.apps.AppBase
             end
 
             app.p = app.drawGraph();
-            highlight(app.p, path,'EdgeColor', 'g');
+            highlight(app.p, path, 'EdgeColor', 'g');
             
             removeStyle(app.UITableDistMatrix);
             
@@ -247,6 +251,7 @@ classdef ProjectDijkstra < matlab.apps.AppBase
         % Button pushed function: RestartButton
         function RestartButtonPushed(app, event)
             app.startupFcn();
+            app.SizeEditField.Value = 0; 
         end
 
         % Value changing function: SpinnerStart
@@ -352,8 +357,8 @@ classdef ProjectDijkstra < matlab.apps.AppBase
             app.TextArea = uitextarea(app.UIFigure);
             app.TextArea.FontSize = 13;
             app.TextArea.BackgroundColor = [0.9412 0.9412 0.9412];
-            app.TextArea.Position = [23 588 477 166];
-            app.TextArea.Value = {'Welcome :)'; 'This program will allow you to find the shortest paths in a given graph.'; 'All you have to do is:'; '1: Enter the size of the graph you want to create'; '2: Complete the adjacency matrix (remember that diagonal weights must be 0)'; '3: Click: Create graph'; '4: Select two vertices'; '5: Click: Shortest path'};
+            app.TextArea.Position = [24 585 478 174];
+            app.TextArea.Value = {'Welcome :)'; 'This program will allow you to find the shortest paths in a given graph.'; ''; 'All you have to do is:'; '1: Enter the size of the graph you want to create'; '2: Complete the adjacency matrix (remember that the weights cannot be  '; '    negative and those on the diagonal must be 0)'; '3: Click: Create graph'; '4: Select two vertices'; '5: Click: Shortest path'};
 
             % Create RestartButton
             app.RestartButton = uibutton(app.UIFigure, 'push');
