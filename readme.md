@@ -6,11 +6,11 @@ Pakiet obliczeniowy MATLAB i jego zastosowania
 
 Adrianna Pytel, Emilia Rutkowska
 
-1. **Wstęp.**
+1. **Wstęp**
 
 Algorytm Dijkstry, nazywany także algorytmem najkrótszych ścieżek, został wynaleziony przeszło pół wieku temu, przez holenderskiego informatyka Edsger&#39;a W. Dijkstra. Celem algorytmu jest znalezienie najkrótszej ścieżki między zadanymi dwoma wierzchołkami grafu, czy też stworzenie tablicy najkrótszych odległości od zadanego wierzchołka.
 
-2. **Opis działania algorytmu.**
+2. **Opis działania algorytmu**
 
 Zaczynamy od wybrania wierzchołka startowego. Będziemy próbowali zbudować tablicę najkrótszych odległości od wierzchołka startowego do wszytskich pozostałych wierzchołków. W każdym kroku algorytmu będziemy dokonywać uaktualnienia informacji w trzech tablicach:
 
@@ -27,7 +27,7 @@ W każdej iteracji algorytmu:
 - jeśli obliczona odległość jest mniejsza od znanej odległości (zapisanej w tablicy odleglości) to uaktualniamy tablicę odległości
 - uaktualniamy tablicę poprzedników oraz tablicę odwiedzonych wierzchołków
 
-3. **Funkcjonalności aplikacji oraz ich użycie.**
+3. **Funkcjonalności aplikacji oraz ich użycie**
 
 W widoku startowym użytkownika wita zwięzła instrukcja obsługii aplikacji, okienko wprowadzania danych oraz przycisk restart. Daną, o którą aplikacja w pierwszej kolejności prosi użytkownika jest rozmiar grafu (ilość budujących graf wierzchołków) mieszczący się w granicach od 1 do 10. W razie wpisania niepoprawnej wartości użytkownik zostaje poinformowany o błędzie i o dopuszczalnym zakresie rozmiaru grafu. . Wprowadzony rozmiar należy zatwierdzić przycieskiem Enter lub klikając w dowolnym miejscu okna aplikacji.
 
@@ -40,7 +40,7 @@ Ponadto zostanie wygenerowana macierz najkrotszych odległości między wszystki
 
 W trakcie działania aplikacji istnieje możliwość modyfikacji wszystkich parametrów, jak również wykonania całościowego resetu doknanych zmian. (o błędzie że zostaje uprzednio wybrana wartosć rozmiaru grafu, więc jeśli chcielibyśmy ją nadpisać tą samą wartością - możemy tego dokonać poprzez 1. zmianę na inną wartość 2. wprowadzenie ponownie oczekiwanej wartosci).
 
-4. **Skrócona instrukcja użycia.**
+4. **Skrócona instrukcja użycia**
 
 1. Wprowadź wielkość grafu (od 1 do 10), zatwierdź wybór ENTER (lub odkliknięciem).
 2. Uzupełnij macierz wag, oczekiwanymi wagami połączeń, po jednej stronie diagonali. Np. wartość 7 wprowadzona w polu (3,5) oznacza: stwórz krawędź o wadze 7 między wierzchołkami: trzecim i piątym.
@@ -49,7 +49,7 @@ W trakcie działania aplikacji istnieje możliwość modyfikacji wszystkich para
 5. Zatwierdź wybór klikając przycisk: Shortest path.
 6. Modyfikuj wprowadzone parametry lub naciśnij przycisk Reset i wprowadź wartości od początku.
 
-5. **Błędy, ostrzeżenia.**
+5. **Błędy, ostrzeżenia**
 
 W tym punkcie zostały zaprezentowne mogące pojawić się w trakcie interakcji z aplikacją wykryte błędy oraz komunikaty.
 
@@ -65,7 +65,7 @@ W tym punkcie zostały zaprezentowne mogące pojawić się w trakcie interakcji 
   - Jeżeli wybierzemy wierzołek o numerze 0, zostanie wyświetlony komunikat, że taki wierzchołek nie istenieje.
   - Jeżeli wybrane wierzchołki należą do różnych podgrafów, które są ze sobą niespójne, to użytkownik zostanie poinformowany, że takie połączenie wymaga stworzenia spójnego grafu.
 
-6. **Podział pracy.**
+6. **Podział pracy**
 
 Emilia Rutkowska – implementacja algorytmu Dijkstry, stworzenie dokumentacji projektu
 
