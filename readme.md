@@ -42,12 +42,12 @@ W trakcie działania aplikacji istnieje możliwość modyfikacji wszystkich para
 
 4. **Skrócona instrukcja użycia**
 
-1. Wprowadź wielkość grafu (od 1 do 10), zatwierdź wybór ENTER (lub odkliknięciem).
-2. Uzupełnij macierz wag, oczekiwanymi wagami połączeń, po jednej stronie diagonali. Np. wartość 7 wprowadzona w polu (3,5) oznacza: stwórz krawędź o wadze 7 między wierzchołkami: trzecim i piątym.
-3. Zatwierdź wybór macierzy wag kilkając przycisk: Create graph.
-4. Spróbuj znaleźć najkrótszą ścieżkę w grafie: wprowadź w startNode wierzchołek początkowy ścieżki, w endNode - wierzchołek końcowy.
-5. Zatwierdź wybór klikając przycisk: Shortest path.
-6. Modyfikuj wprowadzone parametry lub naciśnij przycisk Reset i wprowadź wartości od początku.
+- Wprowadź wielkość grafu (od 1 do 10), zatwierdź wybór ENTER (lub odkliknięciem).
+- Uzupełnij macierz wag, oczekiwanymi wagami połączeń, po jednej stronie diagonali. Np. wartość 7 wprowadzona w polu (3,5) oznacza: stwórz krawędź o wadze 7 między wierzchołkami: trzecim i piątym.
+- Zatwierdź wybór macierzy wag kilkając przycisk: Create graph.
+- Spróbuj znaleźć najkrótszą ścieżkę w grafie: wprowadź w startNode wierzchołek początkowy ścieżki, w endNode - wierzchołek końcowy.
+- Zatwierdź wybór klikając przycisk: Shortest path.
+- Modyfikuj wprowadzone parametry lub naciśnij przycisk Reset i wprowadź wartości od początku.
 
 5. **Błędy, ostrzeżenia**
 
